@@ -12,10 +12,12 @@ class Calculator
 
   def initialize(name, grades)
     @name = name
-    @grades = grades
+    @grades = validate_grade(grades)
   end
 
   def gpa
+    return 0 if @grades.empty?
+
     cumulative_points = @grades.map { |grade| GRADE_POINTS[grade] || 0}.sum
     average_point = cumulative_points / @grades.size.to_f
     average_point.round(1)
@@ -23,6 +25,23 @@ class Calculator
 
   def announcement
     "#{@name} scored an average of #{gpa}"
+  end
+
+  private
+
+  def validate_grade(grades)
+    # check if grade is an array
+    grades = grades.split if grades.is_a?(String)
+    raise ArguementError, 'Grades must be an array' unless grades.is_a?(Array)
+          # Filtering invalid grades passed in
+    grades.filter do | grade |
+      if grade.is_a?(String) && GRADE_POINTS.key?(grade)
+        true
+      else
+        warn "Invalid grade: #{grade}. Skipping."
+        false
+      end
+    end
   end
 end
 

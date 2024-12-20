@@ -2,13 +2,17 @@ class Calculator
   attr_reader :name, :grades
 
   GRADE_POINTS = {
-    "A" => 4.0, "A-" => 3.7,
-    "B+" => 3.3, "B" => 3.0, "B-" => 2.7,
-    "C+" => 2.3, "C" => 2.0, "C-" => 1.7,
-    "D+" => 1.3, "D" => 1.0, "D-" => 0.7,
-    "E" => 0.2, "E+" => 0.5,  "E-" => 0.1,
-    "F" => 0.0, "U" => -1.0
+    'A' => 4.0, 'A-' => 3.7,
+    'B+' => 3.3, 'B' => 3.0, 'B-' => 2.7,
+    'C+' => 2.3, 'C' => 2.0, 'C-' => 1.7,
+    'D+' => 1.3, 'D' => 1.0, 'D-' => 0.7,
+    'E' => 0.2, 'E+' => 0.5, 'E-' => 0.1,
+    'F' => 0.0, 'U' => -1.0
   }
+
+  ARRAY_ERROR = 'Grades must be an array or a comma-separated string'
+  NO_VALID_GRADES_ERROR = 'No valid grades provided'
+  INVALID_GRADE_WARNING = 'Invalid grade: %{grade}. Skipping'
 
   def initialize(name, grades)
     @name = name
@@ -18,9 +22,9 @@ class Calculator
   def gpa
     return 0 if @grades.empty?
 
-    cumulative_points = @grades.map { |grade| GRADE_POINTS[grade] || 0}.sum
-    average_point = cumulative_points / @grades.size.to_f
-    average_point.round(1)
+    cumulative_points = @grades.map { |grade| GRADE_POINTS[grade] }.sum
+
+    (cumulative_points / @grades.size.to_f).round(1)
   end
 
   def announcement
@@ -30,17 +34,23 @@ class Calculator
   private
 
   def validate_grade(grades)
-    # check if grade is an array
+    # check if grades is string and converting to array else raise error
     grades = grades.split if grades.is_a?(String)
-    raise ArguementError, 'Grades must be an array' unless grades.is_a?(Array)
-          # Filtering invalid grades passed in
-    grades.filter do | grade |
-      if grade.is_a?(String) && GRADE_POINTS.key?(grade)
-        true
-      else
-        warn "Invalid grade: #{grade}. Skipping."
-        false
-      end
+    raise ArguementError, ARRAY_ERROR unless grades.is_a?(Array)
+
+    # Filtering for valid grades and raise an exception if invalid grade is found
+    valid_grades = grades.select { |grade| valid_grade?(grade) }
+    raise ArguementError, NO_VALID_GRADES_ERROR if valid_grades.empty?
+
+    valid_grades
+  end
+
+  def valid_grade?(grade)
+    if grade.is_a?(String) && GRADE_POINTS.key?(grade)
+      true
+    else
+      warn format(INVALID_GRADE_WARNING, grade: grade)
+      false
     end
   end
 end
@@ -55,7 +65,6 @@ tests = [
   { in: { name: 'Dan',  grades: ["A", "A-", "B-"] }, out: { gpa: 3.5, announcement: "Dan scored an average of 3.5"  } },
   { in: { name: 'Emma',  grades: ["A", "B+", "F"] }, out: { gpa: 2.4, announcement: "Beryl scored an average of 2.4"  } },
   { in: { name: 'Frida',  grades: ["E", "E-"] }, out: { gpa: 0.2, announcement: "Beryl scored an average of 0.2"  } },
-  { in: { name: 'Gary',  grades: ["U", "U", "B+"] }, out: { gpa: 0.4, announcement: "Beryl scored an average of 0.4"  } },
   { in: { name: 'Gary',  grades: ["U", "U", "B+"] }, out: { gpa: 0.4, announcement: "Beryl scored an average of 0.4"  } },
 ]
 
